@@ -33,6 +33,8 @@ struct khoa {
 };
 
 
+void Check();
+
 int main(){
 
 }
