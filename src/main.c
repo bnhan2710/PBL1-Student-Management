@@ -32,7 +32,6 @@ struct khoa {
     int maKhoa;
 };
 
-void check();
 
 int main(){
 
