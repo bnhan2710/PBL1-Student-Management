@@ -1,24 +1,22 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "c:/Users/ADMIN/Documents/code/PBL_1/PBL1-Student-Managment/src",
-      "program": "c:/Users/ADMIN/Documents/code/PBL_1/PBL1-Student-Managment/src/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
-    }
-  ]
+  "name": "C++ Launch",
+  "type": "cppdbg",
+  "request": "launch",
+  "program": "${workspaceFolder}/a.out",
+  "stopAtEntry": false,
+  "customLaunchSetupCommands": [
+    { "text": "target-run", "description": "run target", "ignoreFailures": false }
+  ],
+  "launchCompleteCommand": "exec-run",
+  "linux": {
+    "MIMode": "gdb",
+    "miDebuggerPath": "/usr/bin/gdb"
+  },
+  "osx": {
+    "MIMode": "lldb"
+  },
+  "windows": {
+    "MIMode": "gdb",
+    "miDebuggerPath": "C:\\MinGw\\bin\\gdb.exe"
+  }
 }
