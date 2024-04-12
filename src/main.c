@@ -153,6 +153,8 @@ void DocFile(char fileName[])
     fclose(sv);
 }
 
+
+
 void NhapHoVaTen(struct fullname* sv) {
     char HoVaTen[MAX_SIZE];
     printf("Nhap ho va ten: ");
