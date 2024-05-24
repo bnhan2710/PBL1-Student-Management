@@ -45,13 +45,14 @@ char fileClass[100][40] = {"23T_Nhat1", "23T_Nhat2" };
 char fileName[100];
 int KiemTraSapXep = 0;
 int KiemTraCapMSV = 0;
-int demnhap = 0;
+int CurrentStudent = 0;
 
 SinhVien NhapSinhVien();
 void Intro();
 void Menu();
 void NhapHoVaTen(struct fullname *sv);
 void NhapNgaySinh(SinhVien *sv);
+void NhapGioiTinh(SinhVien *sv);
 void NhapDiaChi(struct address *DiaChi);
 void fileNames( char tenLop[] );
 void DocFile();
@@ -79,8 +80,8 @@ void XoaTheoMSV(int MSSV);
 void XoaTheoTen(char target[]);
 void XoaDSLop(char target[]);
 
-
 int main() {
+    
     Intro();
     ChonLopTrongDS();
     Menu();
@@ -93,23 +94,18 @@ SinhVien NhapSinhVien() {
     printf("So sinh vien can them : ");
     scanf("%d",&SL);
     TotalStudent += SL;
-    while( demnhap < TotalStudent )
+    while( CurrentStudent < TotalStudent )
     {
-    printf("Nhap thong tin sinh vien thu: %d\n",++demnhap);
-    // printf("Xin Hay Nhap Lop : ");
-    // fflush(stdin);
-    // fgets( sv.lop, sizeof(sv.lop), stdin);
+    printf("Nhap thong tin sinh vien thu: %d\n",++CurrentStudent);
     fflush(stdin);
     NhapHoVaTen(&sv.HovaTen);
     fflush(stdin);
     NhapNgaySinh(&sv);
     while(getchar() != '\n');
-    printf("Xin Hay Nhap Gioi tinh: ");
-    fgets(sv.gender, sizeof(sv.gender), stdin);
-    sv.gender[strcspn(sv.gender, "\n")] = '\0';
+    NhapGioiTinh(&sv);
     printf("Xin Hay Nhap Dia Chi:\n");
     NhapDiaChi(&sv.DiaChi);
-    listSV[demnhap-1] = sv;
+    listSV[CurrentStudent-1] = sv;
     GhiFile();
     }
     DocFile();
@@ -169,7 +165,6 @@ void DocFileLop() {
     fscanf(file, "%d", &TotalClass);
     fflush( stdin );
     fputc('\n', file);
-    // Đọc tên của từng lớp và lưu vào mảng fileClass[]
     int i;
     for ( i = 0; i < TotalClass; i++) {
         fgets(fileClass[i], sizeof(fileClass[i]) , file);
@@ -183,8 +178,8 @@ void ChonLopTrongDS() {
     DocFileLop();
     int temp = 0;
     printf("\n");
-    printf("\t\t                                   Danh Sach Lop                                             \n");
-    printf("\t-----------------------------------------------------------------------------------------------\n");
+    printf("\t\t                              Danh Sach Lop                                  \n");
+    printf("\t====================================================================================\n");
     printf("\t Ban Muon Thao Tac Tren Lop Nao? \n");
     printf("\t So luong lop: %d\n", TotalClass);
     printf("\t Danh sach lop hien co: \n");
@@ -193,7 +188,7 @@ void ChonLopTrongDS() {
         temp++;
     }
     printf("\t %d. Them danh sach moi \n", temp + 1 );
-    printf("\t-----------------------------------------------------------------------------------------------\n");
+    printf("\t====================================================================================\n");
     int n;
     do{
         printf("Vui long nhap lua chon: ");
@@ -216,8 +211,6 @@ void ChonLopTrongDS() {
 }
 
 void GhiFile( ) {
-    fileName[strlen(fileName) - 1 ] = '\0';
-    printf("%s\n", fileName );
     FILE *sv;
     sv = fopen(fileName, "wb+");
     if (sv == NULL)
@@ -225,11 +218,8 @@ void GhiFile( ) {
         printf("file khong ton tai!\n");
         return;
     }
-    // printf("sucess\n");
     fwrite(&TotalStudent, sizeof(int), 1, sv); 
-    fwrite(&demnhap, sizeof(int), 1, sv );
-    // fwrite( &KiemTraSapXep, sizeof(int), 1, sv );
-    // fwrite( &KiemTraCapMSV, sizeof(int), 1, sv );
+    fwrite(&CurrentStudent, sizeof(int), 1, sv );
     int i;
     for (i = 0; i < TotalStudent; i++) {
         fwrite(&listSV[i], sizeof(SinhVien), 1, sv);
@@ -242,20 +232,14 @@ void GhiFile( ) {
 
 void DocFile() {
     FILE *sv;
-    // printf("%s\n", fileName);
     sv = fopen(fileName, "ab+");
     if (sv == NULL) {
         printf("Tao moi file!\n");
         GhiFile(fileName);
         return;
     }
-    // printf("sucess\n");
-    // int sumSv = 0;
-    // int check = 0;
     fread(&TotalStudent, sizeof(int), 1, sv);
-    fread(&demnhap, sizeof(int), 1, sv);
-    // fread( &KiemTraSapXep, sizeof(int), 1, sv );
-    // fread( &KiemTraCapMSV, sizeof(int), 1, sv );
+    fread(&CurrentStudent, sizeof(int), 1, sv);
     int i;
     for ( i = 0; i < TotalStudent; i++) {
         fread(&listSV[i], sizeof(SinhVien), 1, sv);
@@ -295,11 +279,34 @@ void NhapHoVaTen(struct fullname* sv) {
 
 
 
-void NhapNgaySinh( SinhVien* sv ) {
-    printf("Nhap ngay thang nam sinh:\n");
-    scanf("%d", &sv->ngaysinh.day );
-    scanf("%d", &sv->ngaysinh.month );
-    scanf("%d", &sv->ngaysinh.year );
+void NhapNgaySinh(SinhVien* sv) {
+    int d, m, y;
+    printf("Nhap ngay thang nam sinh: (DD MM YYYY): ");
+    scanf("%d %d %d", &d, &m, &y);
+    if (y < 1900 || y > 2005 || m < 1 || m > 12 || d < 1 || d > 31) {
+        printf("Ngay thang nam sinh khong hop le, vui long nhap lai!\n");
+        NhapNgaySinh(sv);
+    } else {
+        sv->ngaysinh.day = d;
+        sv->ngaysinh.month = m;
+        sv->ngaysinh.year = y;
+    }
+}
+
+void NhapGioiTinh(SinhVien* sv) {
+    printf("Xin Hay Chon Gioi Tinh: \n");
+    printf("1. Nam\n");
+    printf("2. Nu\n");
+    int choice;
+    scanf("%d", &choice);
+    if (choice == 1) {
+        strcpy(sv->gender, "Nam");
+    } else if (choice == 2) {
+        strcpy(sv->gender, "Nu");
+    } else {
+        printf("Gioi tinh khong hop le, vui long nhap lai!\n");
+        NhapGioiTinh(sv);
+    }
 }
 
 void NhapDiaChi(struct address *DiaChi) {
@@ -342,23 +349,33 @@ void TimTheoMSV( int left ,int right,int target){
 }
 
 
-void TimTheoTen( int left ,int right , char target[]){
-    int mid  = left + (right - left) / 2;
+void TimTheoTen(int left, int right, char target[]) {
+    int mid = (left + right) / 2;
+       char fullName[50];
+       sprintf(fullName, "%s %s", listSV[mid].HovaTen.ho, listSV[mid].HovaTen.ten);
     if (left > right) {
         printf("Khong tim thay sinh vien\n");
         return;
     }
-    if (strcmp(listSV[mid].HovaTen.ho, target) == 0 || strcmp(listSV[mid].HovaTen.ten, target) == 0) {
+    if (strcmp(fullName, target) == 0) {
         printf("Thong tin sinh vien:\n");
         printf("Ho va ten: %s %s\n", listSV[mid].HovaTen.ho, listSV[mid].HovaTen.ten);
         printf("Ngay sinh: %d/%d/%d\n", listSV[mid].ngaysinh.day, listSV[mid].ngaysinh.month, listSV[mid].ngaysinh.year);
         printf("Gioi tinh: %s\n", listSV[mid].gender);
         printf("Dia chi: %s %s %s\n", listSV[mid].DiaChi.SoNha, listSV[mid].DiaChi.TenDuong, listSV[mid].DiaChi.ThanhPho);
+        printf("Email: %s\n", MSV[mid].email);
         printf("Lop: %s\n", listSV[mid].lop);
         printf("\n");
         return;
-        }
+    }
+    if (strcmp(listSV[mid].HovaTen.ten, target) > 0) {
+        TimTheoTen(left, mid - 1, target);
+    } else {
+        TimTheoTen(mid + 1, right, target);
+    }
 }
+
+
 
 void CapMSV() {
 	int i;
@@ -392,14 +409,20 @@ void TaoVien() {
 
 void NoiDungTrongVien() {
     TaoVien();
-    printf("|%8s\t|%20s\t\t|%16s\t|%19s\t\t|%13s  \t|%26s%22s\n", "So the SV", "Ho Ten SV", "Ngay Sinh", "Email", "Gioi tinh", "Dia chi", "|");
+    printf("|%8s\t|%20s\t\t|%16s\t|%19s\t\t|%10s     |%26s%22s\n", "So the SV", "Ho ten SV", "Ngay Sinh", "Email", "Gioi tinh", "Dia chi", "|");
     TaoVien();
 }
 
-void InSV( SinhVien SV, MSVandEmail MSV ) {
-    printf("\n|%11d\t|%20s %s\t%s%8d-%2d-%2d\t|%27s\t|%13s  \t|%6s-%s-%s", MSV.MSSV, SV.HovaTen.ho, SV.HovaTen.ten, "|", SV.ngaysinh.day, SV.ngaysinh.month, SV.ngaysinh.year, MSV.email, SV.gender, SV.DiaChi.SoNha, SV.DiaChi.TenDuong, SV.DiaChi.ThanhPho);
-    printf("|%16s %31s %23s %31s %15s%47s|", "|", "|", "|", "|", "|", " ");
+void InSV(SinhVien SV, MSVandEmail MSV) {
+     printf("\n|%11d   \t|%20s %s\t%s%8d-%2d-%2d\t|%27s\t|%8s  \t|%6s,%s,%s %36s|", 
+           MSV.MSSV, SV.HovaTen.ho, SV.HovaTen.ten, "|", 
+           SV.ngaysinh.day, SV.ngaysinh.month, SV.ngaysinh.year, 
+           MSV.email, SV.gender, 
+           SV.DiaChi.SoNha, SV.DiaChi.TenDuong, SV.DiaChi.ThanhPho, " ");
+    // printf("|%10d   \t|%10s %s\t%s%1d-%2d-%2d\t|%27s  %31s   %29s %23s %31s%50s|", "|", "|", "|", "|", "|", "");
+    printf("\n");
 }
+
 
 void DuyetDS() {
     int i;
@@ -422,13 +445,13 @@ void SapXepTheoTen( int low, int high ) {
 	for( j = low; j <= high - 1; j++ ) {
 		if ( strcmp( listSV[j].HovaTen.ten, Pivot ) < 0 ) {
 			i++;
-            //change
+            //swap
 			listSVTemp = listSV[i];
             listSV[i] = listSV[j];
             listSV[j] = listSVTemp;
 		}
 	}
-        // change
+        // swap
     listSVTemp = listSV[i+1];
     listSV[i+1] = listSV[high];
     listSV[high] = listSVTemp;
@@ -438,7 +461,13 @@ void SapXepTheoTen( int low, int high ) {
 	}
 }
 void XoaTheoMSV(int MSSV) {
-    int i;
+    printf("Ban co chac muon xoa sinh vien voi ma so: %d !!\n", MSSV);
+    printf("1. Co\n2. Khong\n");
+    int n;
+    scanf("%d", &n);
+    switch(n){
+        case 1:
+            int i;
     int found = 0; 
     for (i = 0; i < TotalStudent; i++) {
         if (MSV[i].MSSV == MSSV) {
@@ -457,14 +486,35 @@ void XoaTheoMSV(int MSSV) {
     } else {
         printf("Khong tim thay sinh vien voi ma so %d\n", MSSV);
     }
+    case 2:
+        printf("Ban co muon tiep tuc xoa khong?\n");
+        printf("1. Co\n2. Khong\n");
+        scanf("%d", &n);
+        switch(n){
+            case 1:
+                XoaTheoMSV(MSSV);
+                break;
+            case 2:
+                break;
+        }
+        break;
+    }
+
 }
 
 void XoaTheoTen(char target[]) {
+    printf("Ban co chac muon xoa sinh vien voi ten: %s !!\n", target);
+    printf("1. Co\n2. Khong\n");
+    int n;
+    scanf("%d", &n);
+    switch(n){
+        case 1:
     int i, j;
     int found = 0;
     for (i = 0; i < TotalStudent; i++) {
-       
-        if (strcmp(listSV[i].HovaTen.ho, target) == 0 || strcmp(listSV[i].HovaTen.ten, target) == 0) {
+       char fullName[50];
+       sprintf(fullName, "%s %s", listSV[i].HovaTen.ho, listSV[i].HovaTen.ten);
+        if (strcmp(fullName, target) == 0) {
             found = 1; 
      
             for (j = i; j < TotalStudent - 1; j++) {
@@ -473,12 +523,26 @@ void XoaTheoTen(char target[]) {
             }
             TotalStudent--;
             i--; 
+            GhiFile();
         }
     }
     if (found) {
         printf("Xoa sinh vien thanh cong\n");
     } else {
         printf("Khong tim thay sinh vien voi ten %s\n", target);
+    }
+    case 2:
+        printf("Ban co muon tiep tuc xoa khong?\n");
+        printf("1. Co\n2. Khong\n");
+        scanf("%d", &n);
+        switch(n){
+            case 1:
+                XoaTheoTen(target);
+                break;
+            case 2:
+                break;
+        }
+        break;
     }
 }
 
@@ -487,36 +551,44 @@ void XoaTheoTen(char target[]) {
 
 
 void Intro() {
-    printf("\t ______________________________________________________________________________________________\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|                                 DO AN PBL1: LAP TRINH TINH TOAN                              |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|                       DE TAI: XAY DUNG UNG DUNG QUAN LY DANH SACH SINH VIEN                  |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|                                        Giao vien huong dan: Nguyen Van Hieu                  |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|         Sinh vien thuc hien:                                                                 |\n");
-	printf("\t|                            Huynh Nhu Bao Nhan(23T_Nhat1)   - MSV: 102230034                  |\n");
-    printf("\t|                            Vo Van Cuong (23T_Nhat1)        - MSV: 102230007                  |\n");
-    printf("\t|                                                                                              |\n");
-    printf("\t|______________________________________________________________________________________________|\n");
+    printf("\t ____________________________________________________________________________________\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|                              DO AN PBL1: LAP TRINH TINH TOAN                      |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|                    DE TAI: XAY DUNG UNG DUNG QUAN LY DANH SACH SINH VIEN          |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|                                     Giao vien huong dan: Nguyen Van Hieu          |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|      Sinh vien thuc hien:                                                         |\n");
+	printf("\t|                         Huynh Nhu Bao Nhan(23T_Nhat1)   - MSV: 102230034          |\n");
+    printf("\t|                         Vo Van Cuong (23T_Nhat1)        - MSV: 102230007          |\n");
+    printf("\t|                                                                                   |\n");
+    printf("\t|___________________________________________________________________________________|\n");
+}
+#include <stdio.h>
+
+void printMenu() {
+    printf("\t\t\t\t\t\t MENU \n");
+    printf("\t====================================================================================\n");
+    printf("\t|                                                                                  |\n");
+    printf("\t|  0. Chon lop hoc                                                                 |\n");
+    printf("\t|  1. Them sinh vien                                                               |\n");
+    printf("\t|  2. Sap xep danh sach sinh vien                                                  |\n");
+    printf("\t|  3. Xoa sinh vien                                                                |\n");
+    printf("\t|  4. Tim kiem sinh vien                                                           |\n");
+    printf("\t|  5. Cap ma sinh vien                                                             |\n");
+    printf("\t|  6. Cap email                                                                    |\n");
+    printf("\t|  7. In danh sach sinh vien                                                       |\n");
+    printf("\t|  8. Thoat                                                                        |\n");
+    printf("\t|                                                                                  |\n");
+    printf("\t====================================================================================\n");
 }
 
+
 void Menu(){
-    printf("\t\t                                         MENU                                          \n");
-    printf("\t-----------------------------------------------------------------------------------------------\n");
-    printf("\t 0. Chon lop hoc\n");
-    printf("\t 1. Them sinh vien\n");
-    printf("\t 2. Sap xep danh sach sinh vien\n");
-    printf("\t 3. Xoa sinh vien\n");
-    printf("\t 4. Tim kiem sinh vien\n");
-    printf("\t 5. Cap ma sinh vien\n");
-    printf("\t 6. Cap email\n");
-    printf("\t 7. In danh sach sinh vien\n");
-    printf("\t 8. Thoat\n");
-    printf("\t-----------------------------------------------------------------------------------------------\n");
+    printMenu();
     int n;
     printf("Vui long nhap lua chon: ");
     scanf("%d", &n);
@@ -566,8 +638,8 @@ void Menu(){
 }
 
 void SapXep(){
-    printf("1. Sap xep theo lop\n");
-    printf("2. Sap xep theo toan bo sinh vien\n");
+    printf("1. Sap xep theo lop o tren\n");
+    printf("2. Chon lop khac\n");
     printf("3. Thoat\n");
     int n;
     do{
@@ -585,7 +657,8 @@ void SapXep(){
             KiemTraSapXep = 1;
             break;
         case 2:
-            printf("Chua co\n");
+            ChonLopTrongDS();
+            Menu();
             break;
         case 3:
             Menu();
@@ -684,10 +757,9 @@ void KiemTraTruocCapEmail(){
 }
 void XoaSinhVien(){
     printf("Nhap lua chon:\n");
-    printf("1. Xoa theo ma so sinh vien\n");
-    printf("2. Xoa theo ten\n");
-    printf("3. Xoa toan bo danh sach lop\n");
-    printf("4. Thoat\n");
+    printf("1. Xoa theo ten\n");
+    printf("2. Xoa theo ma so sinh vien\n");
+    printf("3. Thoat\n");
     int n;
     do {
         printf("Ban chon: ");
@@ -696,12 +768,6 @@ void XoaSinhVien(){
     }while(n < 1 || n > 4);
     switch(n){
         case 1:
-            printf("Vui long nhap ma sinh vien can xoa: ");
-            int IDdel;
-            scanf("%d", &IDdel);
-            XoaTheoMSV(IDdel);
-            break;
-        case 2:
             printf("Vui long nhap ten sinh vien can xoa: ");
             char target[40];
             fflush(stdin);
@@ -709,16 +775,13 @@ void XoaSinhVien(){
             target[strcspn(target, "\n")] = '\0';
             XoaTheoTen(target);
             break;
-        case 3:
-            // printf("Vui long nhap ten lop can xoa: ");
-            // char target[40];
-            // fflush(stdin);
-            // fgets(target, sizeof(target), stdin);
-            // target[strcspn(target, "\n")] = '\0';
-            // XoaDSLop(target);
-            // printf("Xoa sinh vien thanh cong\n");
+        case 2:
+            printf("Vui long nhap ma sinh vien can xoa: ");
+            int IDdel;
+            scanf("%d", &IDdel);
+            XoaTheoMSV(IDdel);
             break;
-        case 4:
+        case 3:
             Menu();
             break;
     }
