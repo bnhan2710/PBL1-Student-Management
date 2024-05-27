@@ -41,11 +41,14 @@ SinhVien listSV[MAX_SIZE];
 MSVandEmail MSV[MAX_SIZE];
 int TotalStudent;
 int TotalClass = 2;
+int fileTotalStudent[100] = {0}; 
 char fileClass[100][40] = {"23T_Nhat1", "23T_Nhat2" }; 
 char fileName[100];
 int KiemTraSapXep = 0;
 int KiemTraCapMSV = 0;
 int CurrentStudent = 0;
+int CheckFile = 0;
+int chonlop;
 
 SinhVien NhapSinhVien();
 void Intro();
@@ -102,6 +105,7 @@ SinhVien NhapSinhVien() {
     printf("Nhap thong tin sinh vien thu: %d\n",++TotalStudent);
     fflush(stdin);
     NhapHoVaTen(&sv.HovaTen);
+    fileTotalStudent[ chonlop ] = TotalStudent;
     fflush(stdin);
     NhapNgaySinh(&sv);
     while(getchar() != '\n');
@@ -110,11 +114,11 @@ SinhVien NhapSinhVien() {
     printf("Xin Hay Nhap Dia Chi:\n");
     NhapDiaChi(&sv.DiaChi);
     listSV[TotalStudent-1] = sv;
+    KiemTraSapXep = 0;
+    KiemTraCapMSV = 0;
     GhiFile();
     }
     DocFile();
-    KiemTraSapXep = 0;
-    KiemTraCapMSV = 0;
     return sv;
 }
 void toUpperCase( char s[] ) {
@@ -250,9 +254,11 @@ void ChonLopTrongDS() {
         scanf("%d", &n);
         if(n < 1 || n > temp + 1) printf("Vui long nhap lai!\n");
     } while(n < 1 || n > temp + 1);
+    chonlop = n - 1;
     if ( n != temp + 1 ) {
         fileNames( fileClass[ n - 1 ] );
         DocFile();
+        fileTotalStudent[chonlop] = TotalStudent;
     }
     else {
         printf("Xin hay nhap ten lop: ");
@@ -273,8 +279,11 @@ void GhiFile( ) {
         printf("file khong ton tai!\n");
         return;
     }
+    fwrite(&CheckFile, sizeof(int), 1, sv );
     fwrite(&TotalStudent, sizeof(int), 1, sv); 
     fwrite(&CurrentStudent, sizeof(int), 1, sv );
+    fwrite(&KiemTraSapXep, sizeof(int), 1, sv );
+    fwrite(&KiemTraCapMSV, sizeof(int), 1, sv );
     int i;
     for (i = 0; i < TotalStudent; i++) {
         fwrite(&listSV[i], sizeof(SinhVien), 1, sv);
@@ -290,11 +299,30 @@ void DocFile() {
     sv = fopen(fileName, "ab+");
     if (sv == NULL) {
         printf("Tao moi file!\n");
-        GhiFile(fileName);
+        return;
+    }
+    if ( fread( &CheckFile, sizeof(CheckFile), 1, sv ) == (size_t)0 ) {
+        // int i;
+        // SinhVien defaultStudent = { "", "", "", 0, 0, 0, "", "", "", "" };
+        // MSVandEmail  defaultMSV = { "", 0 };
+        // for ( i = 0; i < TotalStudent; i++) {
+        //     listSV[i] = defaultStudent;
+        //     MSV[i] = defaultMSV;
+        // }
+        memset( listSV, 0, sizeof(listSV) );
+        memset( MSV, 0, sizeof(MSV) );
+        TotalStudent = 0;
+        CurrentStudent = 0;
+        KiemTraSapXep = 0;
+        KiemTraCapMSV = 0;
+        CheckFile = 1;
+        GhiFile();
         return;
     }
     fread(&TotalStudent, sizeof(int), 1, sv);
     fread(&CurrentStudent, sizeof(int), 1, sv);
+    fread(&KiemTraSapXep, sizeof(int), 1, sv );
+    fread(&KiemTraCapMSV, sizeof(int), 1, sv );
     int i;
     for ( i = 0; i < TotalStudent; i++) {
         fread(&listSV[i], sizeof(SinhVien), 1, sv);
@@ -387,7 +415,7 @@ void TimTheoMSV( int left ,int right,int target){
         return;
     }
     if (MSV[mid].MSSV == target) {
-        printf("                                 Thong tin sinh vien\n");
+        printf("                                \t\tThong tin sinh vien\n");
         printf("\t====================================================================================\n");
         printf("\t- Ho va ten: %s %s\n", listSV[mid].HovaTen.ho, listSV[mid].HovaTen.ten);
         printf("\t- Ngay sinh: %d/%d/%d\n", listSV[mid].ngaysinh.day, listSV[mid].ngaysinh.month, listSV[mid].ngaysinh.year);
@@ -437,9 +465,11 @@ void TimTheoTen(int left, int right, char target[]) {
 
 void CapMSV() {
 	int i;
+    int total = 0;
+    int temp = 0;
     for ( i = 0; i < TotalStudent; i++)
     {
-        MSV[i].MSSV = 102230000  + i + 1;
+        MSV[i].MSSV = 102230000 + ( chonlop * 100 )  + i + 1;
     }
 }
 
@@ -538,7 +568,6 @@ void DuyetDsSapXep() {
             checked = 0;
         }
     }
-    KiemTraSapXep = 1;
 }
 
 void SapXepTheoHo( int low, int high ) {
@@ -740,6 +769,7 @@ void SapXep(){
         case 1:
             SapXepTheoTen( 0, TotalStudent - 1);
             DuyetDsSapXep();
+            KiemTraSapXep = 1;
             CapMSV();
             KiemTraCapMSV = 1;
             CapEmail();
